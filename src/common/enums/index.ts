@@ -1,0 +1,37 @@
+export enum EstadoMesa {
+  LIBRE = 'LIBRE',
+  OCUPADA = 'OCUPADA',
+  CUENTA_PENDIENTE = 'CUENTA_PENDIENTE',
+}
+
+export enum EstadoOrden {
+  PENDIENTE = 'PENDIENTE',
+  EN_PREPARACION = 'EN_PREPARACION',
+  LISTO = 'LISTO',
+  ENTREGADO = 'ENTREGADO',
+  CANCELADO = 'CANCELADO',
+}
+
+export enum EstadoItem {
+  PENDIENTE = 'PENDIENTE',
+  EN_PREPARACION = 'EN_PREPARACION',
+  LISTO = 'LISTO',
+  ENTREGADO = 'ENTREGADO',
+  CANCELADO = 'CANCELADO',
+}
+
+export enum MetodoPago {
+  EFECTIVO = 'EFECTIVO',
+  TARJETA = 'TARJETA',
+}
+
+export enum EstadoPago {
+  PENDIENTE = 'PENDIENTE',
+  PAGADO = 'PAGADO',
+}
+
+export enum RolUsuario {
+  MESERO = 'MESERO',
+  COCINERO = 'COCINERO',
+  GERENTE = 'GERENTE',
+}
