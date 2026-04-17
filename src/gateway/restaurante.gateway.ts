@@ -7,7 +7,8 @@ import {
 import { Server, Socket } from 'socket.io';
 import { OrdenesService } from '../ordenes/ordenes.service';
 import { CuentaService } from '../cuenta/cuenta.service';
-import { Cuenta, Orden, OrdenItem } from '../common/entities';
+import { MenuDiaService } from '../menu-dia/menu-dia.service';
+import { Cuenta, MenuDia, MenuDiaItem, Orden, OrdenItem } from '../common/entities';
 
 @WebSocketGateway({
   cors: { origin: '*', credentials: false },
@@ -20,6 +21,7 @@ export class RestauranteGateway implements OnGatewayInit {
   constructor(
     private readonly ordenesService: OrdenesService,
     private readonly cuentaService: CuentaService,
+    private readonly menuDiaService: MenuDiaService,
   ) {}
 
   afterInit() {
@@ -33,6 +35,14 @@ export class RestauranteGateway implements OnGatewayInit {
     this.cuentaService.setGatewayEmitter({
       emitCuentaGenerada: (cuenta: Cuenta, mesaId: number) =>
         this.emitCuentaGenerada(cuenta, mesaId),
+    });
+
+    this.menuDiaService.setGatewayEmitter({
+      emitMenuDiaCreado: (menu: MenuDia) => this.emitMenuDiaCreado(menu),
+      emitMenuItemActualizado: (item: MenuDiaItem) => this.emitMenuItemActualizado(item),
+      emitMenuItemEliminado: (itemId: number) => this.emitMenuItemEliminado(itemId),
+      emitMenuPlatoAgregado: (item: MenuDiaItem) => this.emitMenuPlatoAgregado(item),
+      emitMenuDiaEliminado: () => this.emitMenuDiaEliminado(),
     });
   }
 
@@ -82,5 +92,26 @@ export class RestauranteGateway implements OnGatewayInit {
 
   emitPlatoAgotado(platoId: number, nombre: string) {
     this.server.emit('plato_agotado', { platoId, nombre });
+  }
+
+  // --- Menu del día ---
+  emitMenuDiaCreado(menu: MenuDia) {
+    this.server.emit('menu_dia_creado', menu);
+  }
+
+  emitMenuItemActualizado(item: MenuDiaItem) {
+    this.server.emit('menu_item_actualizado', item);
+  }
+
+  emitMenuItemEliminado(itemId: number) {
+    this.server.emit('menu_item_eliminado', { itemId });
+  }
+
+  emitMenuPlatoAgregado(item: MenuDiaItem) {
+    this.server.emit('menu_plato_agregado', item);
+  }
+
+  emitMenuDiaEliminado() {
+    this.server.emit('menu_dia_eliminado', {});
   }
 }

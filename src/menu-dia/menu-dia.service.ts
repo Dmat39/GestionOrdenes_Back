@@ -9,6 +9,18 @@ import { MenuDia, MenuDiaItem, Plato } from '../common/entities';
 
 @Injectable()
 export class MenuDiaService {
+  private gatewayEmitter?: {
+    emitMenuDiaCreado: (menu: MenuDia) => void;
+    emitMenuItemActualizado: (item: MenuDiaItem) => void;
+    emitMenuItemEliminado: (itemId: number) => void;
+    emitMenuPlatoAgregado: (item: MenuDiaItem) => void;
+    emitMenuDiaEliminado: () => void;
+  };
+
+  setGatewayEmitter(emitter: typeof this.gatewayEmitter) {
+    this.gatewayEmitter = emitter;
+  }
+
   constructor(
     @InjectRepository(MenuDia)
     private readonly menuRepo: Repository<MenuDia>,
@@ -45,8 +57,8 @@ export class MenuDiaService {
     if (existe)
       throw new ConflictException('Ya existe un menú para hoy');
 
-    const menu = this.menuRepo.create({ fecha: hoy });
-    const saved = await this.menuRepo.save(menu);
+    const nuevo = this.menuRepo.create({ fecha: hoy });
+    const saved = await this.menuRepo.save(nuevo);
 
     for (const platoId of platoIds) {
       const plato = await this.platoRepo.findOne({ where: { id: platoId } });
@@ -56,7 +68,9 @@ export class MenuDiaService {
       }
     }
 
-    return this.getMenu(saved.id);
+    const menu = await this.getMenu(saved.id);
+    this.gatewayEmitter?.emitMenuDiaCreado(menu);
+    return menu;
   }
 
   async updateItem(
@@ -69,7 +83,9 @@ export class MenuDiaService {
     });
     if (!item) throw new NotFoundException(`Item ${itemId} no encontrado`);
     Object.assign(item, data);
-    return this.itemRepo.save(item);
+    const saved = await this.itemRepo.save(item);
+    this.gatewayEmitter?.emitMenuItemActualizado(saved);
+    return saved;
   }
 
   async deleteMenuHoy(): Promise<void> {
@@ -78,6 +94,7 @@ export class MenuDiaService {
     if (!menu) throw new NotFoundException('No hay menú para hoy');
     await this.itemRepo.delete({ menuDia: { id: menu.id } });
     await this.menuRepo.delete(menu.id);
+    this.gatewayEmitter?.emitMenuDiaEliminado();
   }
 
   async agregarPlato(menuId: number, platoId: number): Promise<MenuDiaItem> {
@@ -92,13 +109,16 @@ export class MenuDiaService {
 
     const item = this.itemRepo.create({ menuDia: menu, plato, disponible: true });
     const saved = await this.itemRepo.save(item);
-    return this.itemRepo.findOne({
+    const nuevoItem = await this.itemRepo.findOne({
       where: { id: saved.id },
       relations: ['plato', 'plato.categoria'],
-    }) as Promise<MenuDiaItem>;
+    }) as MenuDiaItem;
+    this.gatewayEmitter?.emitMenuPlatoAgregado(nuevoItem);
+    return nuevoItem;
   }
 
   async removeItem(itemId: number): Promise<void> {
     await this.itemRepo.delete(itemId);
+    this.gatewayEmitter?.emitMenuItemEliminado(itemId);
   }
 }
