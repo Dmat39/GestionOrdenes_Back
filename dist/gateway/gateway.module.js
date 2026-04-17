@@ -11,12 +11,13 @@ const common_1 = require("@nestjs/common");
 const restaurante_gateway_1 = require("./restaurante.gateway");
 const ordenes_module_1 = require("../ordenes/ordenes.module");
 const cuenta_module_1 = require("../cuenta/cuenta.module");
+const menu_dia_module_1 = require("../menu-dia/menu-dia.module");
 let GatewayModule = class GatewayModule {
 };
 exports.GatewayModule = GatewayModule;
 exports.GatewayModule = GatewayModule = __decorate([
     (0, common_1.Module)({
-        imports: [ordenes_module_1.OrdenesModule, cuenta_module_1.CuentaModule],
+        imports: [ordenes_module_1.OrdenesModule, cuenta_module_1.CuentaModule, menu_dia_module_1.MenuDiaModule],
         providers: [restaurante_gateway_1.RestauranteGateway],
     })
 ], GatewayModule);

@@ -14,13 +14,16 @@ const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
 const ordenes_service_1 = require("../ordenes/ordenes.service");
 const cuenta_service_1 = require("../cuenta/cuenta.service");
+const menu_dia_service_1 = require("../menu-dia/menu-dia.service");
 let RestauranteGateway = class RestauranteGateway {
     ordenesService;
     cuentaService;
+    menuDiaService;
     server;
-    constructor(ordenesService, cuentaService) {
+    constructor(ordenesService, cuentaService, menuDiaService) {
         this.ordenesService = ordenesService;
         this.cuentaService = cuentaService;
+        this.menuDiaService = menuDiaService;
     }
     afterInit() {
         this.ordenesService.setGatewayEmitter({
@@ -30,6 +33,13 @@ let RestauranteGateway = class RestauranteGateway {
         });
         this.cuentaService.setGatewayEmitter({
             emitCuentaGenerada: (cuenta, mesaId) => this.emitCuentaGenerada(cuenta, mesaId),
+        });
+        this.menuDiaService.setGatewayEmitter({
+            emitMenuDiaCreado: (menu) => this.emitMenuDiaCreado(menu),
+            emitMenuItemActualizado: (item) => this.emitMenuItemActualizado(item),
+            emitMenuItemEliminado: (itemId) => this.emitMenuItemEliminado(itemId),
+            emitMenuPlatoAgregado: (item) => this.emitMenuPlatoAgregado(item),
+            emitMenuDiaEliminado: () => this.emitMenuDiaEliminado(),
         });
     }
     handleUnirseCocina(client) {
@@ -65,6 +75,21 @@ let RestauranteGateway = class RestauranteGateway {
     emitPlatoAgotado(platoId, nombre) {
         this.server.emit('plato_agotado', { platoId, nombre });
     }
+    emitMenuDiaCreado(menu) {
+        this.server.emit('menu_dia_creado', menu);
+    }
+    emitMenuItemActualizado(item) {
+        this.server.emit('menu_item_actualizado', item);
+    }
+    emitMenuItemEliminado(itemId) {
+        this.server.emit('menu_item_eliminado', { itemId });
+    }
+    emitMenuPlatoAgregado(item) {
+        this.server.emit('menu_plato_agregado', item);
+    }
+    emitMenuDiaEliminado() {
+        this.server.emit('menu_dia_eliminado', {});
+    }
 };
 exports.RestauranteGateway = RestauranteGateway;
 __decorate([
@@ -95,6 +120,7 @@ exports.RestauranteGateway = RestauranteGateway = __decorate([
         namespace: '/',
     }),
     __metadata("design:paramtypes", [ordenes_service_1.OrdenesService,
-        cuenta_service_1.CuentaService])
+        cuenta_service_1.CuentaService,
+        menu_dia_service_1.MenuDiaService])
 ], RestauranteGateway);
 //# sourceMappingURL=restaurante.gateway.js.map

@@ -4,6 +4,8 @@ export declare class MenuDiaService {
     private readonly menuRepo;
     private readonly itemRepo;
     private readonly platoRepo;
+    private gatewayEmitter?;
+    setGatewayEmitter(emitter: typeof this.gatewayEmitter): void;
     constructor(menuRepo: Repository<MenuDia>, itemRepo: Repository<MenuDiaItem>, platoRepo: Repository<Plato>);
     private getHoy;
     getMenuHoy(): Promise<MenuDia | null>;

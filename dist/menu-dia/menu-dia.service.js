@@ -21,6 +21,10 @@ let MenuDiaService = class MenuDiaService {
     menuRepo;
     itemRepo;
     platoRepo;
+    gatewayEmitter;
+    setGatewayEmitter(emitter) {
+        this.gatewayEmitter = emitter;
+    }
     constructor(menuRepo, itemRepo, platoRepo) {
         this.menuRepo = menuRepo;
         this.itemRepo = itemRepo;
@@ -50,8 +54,8 @@ let MenuDiaService = class MenuDiaService {
         const existe = await this.menuRepo.findOne({ where: { fecha: hoy } });
         if (existe)
             throw new common_1.ConflictException('Ya existe un menú para hoy');
-        const menu = this.menuRepo.create({ fecha: hoy });
-        const saved = await this.menuRepo.save(menu);
+        const nuevo = this.menuRepo.create({ fecha: hoy });
+        const saved = await this.menuRepo.save(nuevo);
         for (const platoId of platoIds) {
             const plato = await this.platoRepo.findOne({ where: { id: platoId } });
             if (plato) {
@@ -59,7 +63,9 @@ let MenuDiaService = class MenuDiaService {
                 await this.itemRepo.save(item);
             }
         }
-        return this.getMenu(saved.id);
+        const menu = await this.getMenu(saved.id);
+        this.gatewayEmitter?.emitMenuDiaCreado(menu);
+        return menu;
     }
     async updateItem(itemId, data) {
         const item = await this.itemRepo.findOne({
@@ -69,7 +75,9 @@ let MenuDiaService = class MenuDiaService {
         if (!item)
             throw new common_1.NotFoundException(`Item ${itemId} no encontrado`);
         Object.assign(item, data);
-        return this.itemRepo.save(item);
+        const saved = await this.itemRepo.save(item);
+        this.gatewayEmitter?.emitMenuItemActualizado(saved);
+        return saved;
     }
     async deleteMenuHoy() {
         const hoy = this.getHoy();
@@ -78,6 +86,7 @@ let MenuDiaService = class MenuDiaService {
             throw new common_1.NotFoundException('No hay menú para hoy');
         await this.itemRepo.delete({ menuDia: { id: menu.id } });
         await this.menuRepo.delete(menu.id);
+        this.gatewayEmitter?.emitMenuDiaEliminado();
     }
     async agregarPlato(menuId, platoId) {
         const menu = await this.menuRepo.findOne({ where: { id: menuId } });
@@ -91,13 +100,16 @@ let MenuDiaService = class MenuDiaService {
             throw new common_1.NotFoundException(`Plato ${platoId} no encontrado`);
         const item = this.itemRepo.create({ menuDia: menu, plato, disponible: true });
         const saved = await this.itemRepo.save(item);
-        return this.itemRepo.findOne({
+        const nuevoItem = await this.itemRepo.findOne({
             where: { id: saved.id },
             relations: ['plato', 'plato.categoria'],
         });
+        this.gatewayEmitter?.emitMenuPlatoAgregado(nuevoItem);
+        return nuevoItem;
     }
     async removeItem(itemId) {
         await this.itemRepo.delete(itemId);
+        this.gatewayEmitter?.emitMenuItemEliminado(itemId);
     }
 };
 exports.MenuDiaService = MenuDiaService;
